@@ -1,0 +1,1 @@
+javac -d bin ./src/imgpro/*.java ./src/imgpro/bitchange/*.java ./src/imgpro/bitplane/*.java ./src/imgpro/histogram/*.java ./src/imgpro/imagecompression/*.java ./src/imgpro/restoration/*.java ./src/imgpro/spatialfiltering/*.java ./src/imgpro/zooms/*.java 
