@@ -24,7 +24,7 @@ Various techniques used for Image Processing. The techniques include:
   * Min filter
   * Midpoint filter
   * Alpha-trimmed mean filter
-* Spatial Filtering Smoothing - Blurring and sharpen an image. The implemented algorithms are:
+* Spatial Filtering Smoothing - Blur and sharpen an image. The implemented algorithms are:
   * Smoothing filter
   * Mean filter
   * Sharpening Laplacian filter
