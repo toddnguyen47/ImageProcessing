@@ -63,7 +63,7 @@ public class InitImage {
 				int g = c.getGreen();
 				int b = c.getBlue();
 
-				int gr = MainWindow.customRound((r + g + b) / 3.0);
+				int gr = (r + g + b) / 3;
 				imageArrayForm[i][j] = gr;
 
 				Color gColor = new Color(gr, gr, gr);						
