@@ -71,13 +71,13 @@
                           <Component id="jLabel4" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace min="-2" pref="30" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                          <Component id="textFieldWidth" max="32767" attributes="0"/>
-                          <Component id="lblText1" pref="35" max="32767" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="lblText1" min="-2" max="-2" attributes="0"/>
+                          <Component id="textFieldWidth" min="-2" pref="45" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                          <Component id="textFieldHeight" pref="35" max="32767" attributes="0"/>
+                          <Component id="textFieldHeight" max="32767" attributes="0"/>
                           <Component id="lblText2" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace min="-2" pref="30" max="-2" attributes="0"/>
@@ -192,17 +192,11 @@
             </Component>
             <Component class="javax.swing.JComboBox" name="cboxAction">
               <Properties>
-                <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-                  <StringArray count="8">
-                    <StringItem index="0" value="Zoom In"/>
-                    <StringItem index="1" value="Zoom Out"/>
-                    <StringItem index="2" value="Bit Change"/>
-                    <StringItem index="3" value="Bit Plane Removal"/>
-                    <StringItem index="4" value="Histogram Equalization"/>
-                    <StringItem index="5" value="Spatial Filtering Restoration"/>
-                    <StringItem index="6" value="Spatial Filtering Smoothing"/>
-                    <StringItem index="7" value="Image Compression"/>
-                  </StringArray>
+                <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+                  <Connection code="new DefaultComboBoxModel&lt;String&gt;&#xd;&#xa;(ACTION_CHOICES)" type="code"/>
+                </Property>
+                <Property name="selectedItem" type="java.lang.Object" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+                  <Connection code="new DefaultComboBoxModel&lt;String&gt;(ACTION_CHOICES)" type="code"/>
                 </Property>
                 <Property name="toolTipText" type="java.lang.String" value="Change the zoom-in feature"/>
               </Properties>
@@ -228,11 +222,6 @@
               </Events>
             </Component>
             <Component class="javax.swing.JComboBox" name="cboxAlgo">
-              <Properties>
-                <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-                  <Connection code="new DefaultComboBoxModel&lt;String&gt;&#xd;&#xa;(ZOOMOUT_CHOICES)" type="code"/>
-                </Property>
-              </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cboxAlgoActionPerformed"/>
               </Events>
@@ -249,17 +238,18 @@
             </Component>
             <Component class="javax.swing.JTextField" name="textFieldWidth">
               <Properties>
-                <Property name="text" type="java.lang.String" value="32"/>
+                <Property name="text" type="java.lang.String" value="1"/>
                 <Property name="toolTipText" type="java.lang.String" value="New Width"/>
               </Properties>
               <AuxValues>
                 <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new FocusTextField()"/>
-                <AuxValue name="JavaCodeGenerator_ListenersCodePost" type="java.lang.String" value="textFieldWidth.getDocument().addDocumentListener(new DocumentListener() {&#xa;&#x9;public void changedUpdate(DocumentEvent e) {setOtherTextField();}&#xa;&#x9;public void removeUpdate(DocumentEvent e){setOtherTextField();};&#xa;&#x9;public void insertUpdate(DocumentEvent e){setOtherTextField();};&#xa;&#xa;&#x9;private void setOtherTextField() {&#xa;&#x9;&#x9;String action = cboxAction.getSelectedItem().toString();&#xa;&#x9;&#x9;String algo = cboxAlgo.getSelectedItem().toString();&#xa;&#x9;&#x9;if&#x9;(action.contains(&quot;Spatial Filtering&quot;) &amp;&amp;&#xa;&#x9;&#x9;&#x9;(!algo.contains(&quot;High-boost&quot;) &amp;&amp; !algo.contains(&quot;Contraharmonic&quot;)&#xa;&#x9;&#x9;&#x9;&amp;&amp; !algo.contains(&quot;Alpha-trimmed&quot;) )) {&#xa;&#x9;&#x9;&#x9;textFieldHeight.setText(textFieldWidth.getText());&#xa;&#x9;&#x9;}&#xa;&#x9;}&#xa;});"/>
+                <AuxValue name="JavaCodeGenerator_ListenersCodePost" type="java.lang.String" value="//textFieldWidth.getDocument().addDocumentListener(new DocumentListener() {&#xa;//&#x9;public void changedUpdate(DocumentEvent e) {setOtherTextField();}&#xa;//&#x9;public void removeUpdate(DocumentEvent e){setOtherTextField();};&#xa;//&#x9;public void insertUpdate(DocumentEvent e){setOtherTextField();};&#xa;//&#xa;//&#x9;private void setOtherTextField() {&#xa;//&#x9;&#x9;String action = cboxAction.getSelectedItem().toString();&#xa;//&#x9;&#x9;String algo = cboxAlgo.getSelectedItem().toString();&#xa;//&#x9;&#x9;if&#x9;(action.contains(&quot;Spatial Filtering&quot;) &amp;&amp;&#xa;//&#x9;&#x9;&#x9;(!algo.contains(&quot;High-boost&quot;) &amp;&amp; !algo.contains(&quot;Contraharmonic&quot;)&#xa;//&#x9;&#x9;&#x9;&amp;&amp; !algo.contains(&quot;Alpha-trimmed&quot;) )) {&#xa;//&#x9;&#x9;&#x9;textFieldHeight.setText(textFieldWidth.getText());&#xa;//&#x9;&#x9;}&#xa;//&#x9;}&#xa;//});"/>
               </AuxValues>
             </Component>
             <Component class="javax.swing.JTextField" name="textFieldHeight">
               <Properties>
-                <Property name="text" type="java.lang.String" value="32"/>
+                <Property name="editable" type="boolean" value="false"/>
+                <Property name="text" type="java.lang.String" value="1"/>
                 <Property name="toolTipText" type="java.lang.String" value="New Height"/>
               </Properties>
               <AuxValues>
@@ -269,13 +259,15 @@
             <Component class="javax.swing.JLabel" name="lblText1">
               <Properties>
                 <Property name="horizontalAlignment" type="int" value="0"/>
-                <Property name="text" type="java.lang.String" value="Width"/>
+                <Property name="text" type="java.lang.String" value="Sigma"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JLabel" name="lblText2">
               <Properties>
                 <Property name="horizontalAlignment" type="int" value="0"/>
-                <Property name="text" type="java.lang.String" value="Height"/>
+                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
+                  <Connection code="&quot;&quot;" type="code"/>
+                </Property>
               </Properties>
             </Component>
             <Component class="javax.swing.JLabel" name="labelNewImage">
@@ -295,7 +287,7 @@
             <Component class="javax.swing.JLabel" name="jLabelBits1">
               <Properties>
                 <Property name="horizontalAlignment" type="int" value="0"/>
-                <Property name="text" type="java.lang.String" value="Bits"/>
+                <Property name="text" type="java.lang.String" value="Low"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JComboBox" name="cboxBitSelection">
@@ -344,7 +336,7 @@
             <Component class="javax.swing.JLabel" name="jLabelBits2">
               <Properties>
                 <Property name="horizontalAlignment" type="int" value="0"/>
-                <Property name="text" type="java.lang.String" value="Bits"/>
+                <Property name="text" type="java.lang.String" value="High"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JCheckBox" name="jCheckHistogram">

@@ -5,14 +5,11 @@
  */
 package imgpro;
 
+import imgpro.adaptivecanny.AdaptiveCanny;
+import imgpro.gaussianblur.Autocorrelation;
+import imgpro.gaussianblur.EdgeDetection;
+import imgpro.gaussianblur.GaussianBlur;
 import imgpro.histogram.HistogramEqualization;
-import imgpro.bitchange.BitChange;
-import imgpro.bitplane.BitPlaneRemoval;
-import imgpro.imagecompression.ImageCompression;
-import imgpro.restoration.ImageRestoration;
-import imgpro.spatialfiltering.SpatialFilter;
-import imgpro.zooms.ZoomIn;
-import imgpro.zooms.ZoomOut;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
@@ -37,7 +34,7 @@ public class MainWindow extends javax.swing.JFrame {
 	/**
 	 * Creates new form MainWindow
 	 */
-	public MainWindow() {
+    public MainWindow() {
 		initImage = new InitImage();
 		initComponents();
 		this.getRootPane().setDefaultButton(btnExecute);
@@ -92,7 +89,9 @@ public class MainWindow extends javax.swing.JFrame {
         labelInitImage.setMinimumSize(new java.awt.Dimension(10, 10));
         labelInitImage.setText("");
 
-        cboxAction.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Zoom In", "Zoom Out", "Bit Change", "Bit Plane Removal", "Histogram Equalization", "Spatial Filtering Restoration", "Spatial Filtering Smoothing", "Image Compression" }));
+        cboxAction.setModel(new DefaultComboBoxModel<String>
+            (ACTION_CHOICES));
+        cboxAction.setSelectedItem(new DefaultComboBoxModel<String>(ACTION_CHOICES));
         cboxAction.setToolTipText("Change the zoom-in feature");
         cboxAction.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -110,8 +109,6 @@ public class MainWindow extends javax.swing.JFrame {
             }
         });
 
-        cboxAlgo.setModel(new DefaultComboBoxModel<String>
-            (ZOOMOUT_CHOICES));
         String action = cboxAction.getSelectedItem().toString();
         if (action.compareToIgnoreCase("Zoom Out") == 0) {
             cboxAlgo.setEnabled(true);
@@ -128,231 +125,246 @@ public class MainWindow extends javax.swing.JFrame {
         jLabel4.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel4.setText("Algorithm");
 
-        textFieldWidth.setText("32");
+        textFieldWidth.setText("1");
         textFieldWidth.setToolTipText("New Width");
-        textFieldWidth.getDocument().addDocumentListener(new DocumentListener() {
-            public void changedUpdate(DocumentEvent e) {setOtherTextField();}
-            public void removeUpdate(DocumentEvent e){setOtherTextField();};
-            public void insertUpdate(DocumentEvent e){setOtherTextField();};
+        //textFieldWidth.getDocument().addDocumentListener(new DocumentListener() {
+            //	public void changedUpdate(DocumentEvent e) {setOtherTextField();}
+            //	public void removeUpdate(DocumentEvent e){setOtherTextField();};
+            //	public void insertUpdate(DocumentEvent e){setOtherTextField();};
+            //
+            //	private void setOtherTextField() {
+                //		String action = cboxAction.getSelectedItem().toString();
+                //		String algo = cboxAlgo.getSelectedItem().toString();
+                //		if	(action.contains("Spatial Filtering") &&
+                    //			(!algo.contains("High-boost") && !algo.contains("Contraharmonic")
+                        //			&& !algo.contains("Alpha-trimmed") )) {
+                    //			textFieldHeight.setText(textFieldWidth.getText());
+                    //		}
+                //	}
+            //});
 
-            private void setOtherTextField() {
-                String action = cboxAction.getSelectedItem().toString();
-                String algo = cboxAlgo.getSelectedItem().toString();
-                if	(action.contains("Spatial Filtering") &&
-                    (!algo.contains("High-boost") && !algo.contains("Contraharmonic")
-                        && !algo.contains("Alpha-trimmed") )) {
-                    textFieldHeight.setText(textFieldWidth.getText());
-                }
-            }
-        });
+    textFieldHeight.setEditable(false);
+    textFieldHeight.setText("1");
+    textFieldHeight.setToolTipText("New Height");
 
-        textFieldHeight.setText("32");
-        textFieldHeight.setToolTipText("New Height");
+    lblText1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    lblText1.setText("Sigma");
 
-        lblText1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblText1.setText("Width");
+    lblText2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    lblText2.setText("");
 
-        lblText2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblText2.setText("Height");
+    labelNewImage.setText("newImage");
+    labelNewImage.setText("");
+    labelNewImage.setMaximumSize(new java.awt.Dimension(8192, 8192));
+    labelNewImage.setMinimumSize(new java.awt.Dimension(32, 32));
+    labelInitImage.setText("");
 
-        labelNewImage.setText("newImage");
-        labelNewImage.setText("");
-        labelNewImage.setMaximumSize(new java.awt.Dimension(8192, 8192));
-        labelNewImage.setMinimumSize(new java.awt.Dimension(32, 32));
-        labelInitImage.setText("");
+    jLabelBits1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    jLabelBits1.setText("Low");
 
-        jLabelBits1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabelBits1.setText("Bits");
-
-        Integer[] numberOfBits = new Integer[MAX_BIT];
-        for (int i = 0; i < MAX_BIT; i++) {
-            numberOfBits[i] = i + 1;
+    Integer[] numberOfBits = new Integer[MAX_BIT];
+    for (int i = 0; i < MAX_BIT; i++) {
+        numberOfBits[i] = i + 1;
+    }
+    cboxBitSelection.setModel(new javax.swing.DefaultComboBoxModel<Integer>(numberOfBits));
+    cboxBitSelection.setSelectedIndex(MAX_BIT - 1);
+    cboxBitSelection.setEnabled(false);
+    cboxBitSelection.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            cboxBitSelectionActionPerformed(evt);
         }
-        cboxBitSelection.setModel(new javax.swing.DefaultComboBoxModel<Integer>(numberOfBits));
-        cboxBitSelection.setSelectedIndex(MAX_BIT - 1);
-        cboxBitSelection.setEnabled(false);
-        cboxBitSelection.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cboxBitSelectionActionPerformed(evt);
-            }
-        });
+    });
 
-        btnConvertInit.setText("Convert to Initial Picture");
-        btnConvertInit.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnConvertInitActionPerformed(evt);
-            }
-        });
-
-        numberOfBits = new Integer[MAX_BIT];
-        for (int i = 0; i < MAX_BIT; i++) {
-            numberOfBits[i] = i + 1;
+    btnConvertInit.setText("Convert to Initial Picture");
+    btnConvertInit.addActionListener(new java.awt.event.ActionListener() {
+        public void actionPerformed(java.awt.event.ActionEvent evt) {
+            btnConvertInitActionPerformed(evt);
         }
-        cboxBitSelection1.setModel(new javax.swing.DefaultComboBoxModel<Integer>(numberOfBits));
-        cboxBitSelection1.setSelectedIndex(MAX_BIT - 1);
-        cboxBitSelection1.setEnabled(false);
+    });
 
-        jLabelBits2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabelBits2.setText("Bits");
+    numberOfBits = new Integer[MAX_BIT];
+    for (int i = 0; i < MAX_BIT; i++) {
+        numberOfBits[i] = i + 1;
+    }
+    cboxBitSelection1.setModel(new javax.swing.DefaultComboBoxModel<Integer>(numberOfBits));
+    cboxBitSelection1.setSelectedIndex(MAX_BIT - 1);
+    cboxBitSelection1.setEnabled(false);
 
-        jCheckHistogram.setText("Perform Histogram Equalization on resulting image");
+    jLabelBits2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+    jLabelBits2.setText("High");
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addGap(17, 17, 17)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addGap(19, 19, 19)
-                        .addComponent(btnInsertImage)
-                        .addGap(32, 32, 32)
-                        .addComponent(cboxAction, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(148, 148, 148)
-                        .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 72, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addGap(30, 30, 30)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(cboxAlgo, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(30, 30, 30)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(textFieldWidth)
-                    .addComponent(lblText1, javax.swing.GroupLayout.DEFAULT_SIZE, 35, Short.MAX_VALUE))
-                .addGap(10, 10, 10)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(textFieldHeight, javax.swing.GroupLayout.DEFAULT_SIZE, 35, Short.MAX_VALUE)
-                    .addComponent(lblText2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(30, 30, 30)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(cboxBitSelection, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jLabelBits1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGap(21, 21, 21)))
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jLabelBits2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGap(43, 43, 43))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(cboxBitSelection1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(btnExecute)
-                        .addGap(30, 30, 30)
-                        .addComponent(btnConvertInit))
-                    .addComponent(jCheckHistogram))
-                .addGap(636, 636, 636))
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(19, 19, 19)
-                .addComponent(labelInitImage, javax.swing.GroupLayout.PREFERRED_SIZE, 512, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(31, 31, 31)
-                .addComponent(labelNewImage, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(27, 27, 27)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel2)
-                            .addComponent(jLabel4)
-                            .addComponent(lblText1)
-                            .addComponent(lblText2)
-                            .addComponent(jLabelBits1)
-                            .addComponent(jLabelBits2))
-                        .addGap(5, 5, 5))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(jCheckHistogram)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)))
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+    jCheckHistogram.setText("Perform Histogram Equalization on resulting image");
+
+    javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+    jPanel1.setLayout(jPanel1Layout);
+    jPanel1Layout.setHorizontalGroup(
+        jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+            .addGap(17, 17, 17)
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                    .addGap(19, 19, 19)
                     .addComponent(btnInsertImage)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(1, 1, 1)
-                        .addComponent(cboxAction, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGap(32, 32, 32)
+                    .addComponent(cboxAction, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel1Layout.createSequentialGroup()
+                    .addGap(148, 148, 148)
+                    .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 72, javax.swing.GroupLayout.PREFERRED_SIZE)))
+            .addGap(30, 30, 30)
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addComponent(cboxAlgo, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGap(30, 30, 30)
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(lblText1)
+                .addComponent(textFieldWidth, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addComponent(textFieldHeight)
+                .addComponent(lblText2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGap(30, 30, 30)
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel1Layout.createSequentialGroup()
+                    .addComponent(cboxBitSelection, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(jPanel1Layout.createSequentialGroup()
+                    .addComponent(jLabelBits1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGap(21, 21, 21)))
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel1Layout.createSequentialGroup()
+                    .addComponent(jLabelBits2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGap(43, 43, 43))
+                .addGroup(jPanel1Layout.createSequentialGroup()
+                    .addComponent(cboxBitSelection1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel1Layout.createSequentialGroup()
+                    .addComponent(btnExecute)
+                    .addGap(30, 30, 30)
+                    .addComponent(btnConvertInit))
+                .addComponent(jCheckHistogram))
+            .addGap(636, 636, 636))
+        .addGroup(jPanel1Layout.createSequentialGroup()
+            .addGap(19, 19, 19)
+            .addComponent(labelInitImage, javax.swing.GroupLayout.PREFERRED_SIZE, 512, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGap(31, 31, 31)
+            .addComponent(labelNewImage, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+    );
+    jPanel1Layout.setVerticalGroup(
+        jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(jPanel1Layout.createSequentialGroup()
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel1Layout.createSequentialGroup()
+                    .addGap(27, 27, 27)
                     .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(cboxAlgo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(textFieldWidth, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(btnExecute)
-                        .addComponent(textFieldHeight, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(cboxBitSelection, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(btnConvertInit)
-                        .addComponent(cboxBitSelection1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addGap(86, 86, 86)
+                        .addComponent(jLabel2)
+                        .addComponent(jLabel4)
+                        .addComponent(lblText1)
+                        .addComponent(lblText2)
+                        .addComponent(jLabelBits1)
+                        .addComponent(jLabelBits2))
+                    .addGap(5, 5, 5))
+                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(jCheckHistogram)
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)))
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(btnInsertImage)
+                .addGroup(jPanel1Layout.createSequentialGroup()
+                    .addGap(1, 1, 1)
+                    .addComponent(cboxAction, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(labelInitImage, javax.swing.GroupLayout.PREFERRED_SIZE, 513, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(labelNewImage, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-        );
+                    .addComponent(cboxAlgo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(textFieldWidth, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnExecute)
+                    .addComponent(textFieldHeight, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cboxBitSelection, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnConvertInit)
+                    .addComponent(cboxBitSelection1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+            .addGap(86, 86, 86)
+            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(labelInitImage, javax.swing.GroupLayout.PREFERRED_SIZE, 513, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(labelNewImage, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+    );
 
-        jScrollPane1.setViewportView(jPanel1);
+    jScrollPane1.setViewportView(jPanel1);
 
-        getContentPane().add(jScrollPane1, java.awt.BorderLayout.CENTER);
+    getContentPane().add(jScrollPane1, java.awt.BorderLayout.CENTER);
 
-        pack();
+    pack();
     }// </editor-fold>//GEN-END:initComponents
 
 	private void btnExecuteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExecuteActionPerformed
-		String optionChosen = cboxAction.getSelectedItem().toString();
-		String algoChosen = cboxAlgo.getSelectedItem().toString();
+		String actionChosen = cboxAction.getSelectedItem().toString();
+		//String algoChosen = cboxAlgo.getSelectedItem().toString();
 		
 		if (initPicLoaded()) {
 			convertedImage = null;
-			if (optionChosen.equalsIgnoreCase("Zoom In")) {
-				int temp[][] = ZoomIn.getInstance().zoomInAction(evt, this, textFieldWidth, textFieldHeight,
-						labelInitImage, initImage.getImageArrayForm());
-				if (temp != null) {
-					initImage.setImageFromArray(temp);
-					setNewImage(initImage.getImageArrayForm(), MainWindow.INIT_IMAGE);
-				}
+			double tempImage[][] = null;
+			double sigma = 0;
+			try {
+				sigma = Double.valueOf(textFieldWidth.getText());
+			} catch (NumberFormatException e) {
+				JOptionPane.showMessageDialog(this, "Sigma is not an integer.");
 			}
-			else {
-				if (optionChosen.equalsIgnoreCase("Zoom Out")) {
-					convertedImage = ZoomOut.getInstance().zoomOutAction(evt, this, textFieldWidth, textFieldHeight,
-							labelInitImage, initImage.getImageArrayForm(), algoChosen);
-				}
-				else if (optionChosen.equalsIgnoreCase("Bit Change")) {
-					int bitSelected = ((int) cboxBitSelection.getSelectedItem());
-					currentConvBit = bitSelected;
-					convertedImage = BitChange.getInstance().bitChangeAction(evt, this, initImage.getCurrentBit(), 
-							bitSelected, initImage.getImageArrayForm());
-				}
-				else if (optionChosen.equalsIgnoreCase("Histogram Equalization")) {
-					convertedImage = HistogramEqualization.getInstance().histEqual(evt, 
-							this, initImage.getCurrentBit(), initImage.getImageArrayForm(), algoChosen);
-				}
-				else if (optionChosen.equalsIgnoreCase("Spatial Filtering Smoothing")) {
-					convertedImage = SpatialFilter.getInstance().getSpatialFilter(this, initImage.getImageArrayForm(),
-						algoChosen, textFieldWidth, textFieldHeight);
-				}
-				else if (optionChosen.equalsIgnoreCase("Bit Plane Removal")) {
-					int startPlane = Integer.parseInt(cboxBitSelection.getSelectedItem().toString());
-					int endPlane = Integer.parseInt(cboxBitSelection1.getSelectedItem().toString());
-					convertedImage = BitPlaneRemoval.getInstance().bitPlaneRemoval(evt, this,
-							initImage.getImageArrayForm(), startPlane, endPlane);
-				}
-				else if (optionChosen.equalsIgnoreCase("Spatial Filtering Restoration")) {
-					convertedImage = ImageRestoration.getInstance().getRestoredImage(this, 
-						initImage.getImageArrayForm(), algoChosen, textFieldWidth, textFieldHeight);
-				}
-				else if (optionChosen.equalsIgnoreCase("Image Compression")) {
-					convertedImage = ImageCompression.getInstance().getImageCompression(this, 
-							initImage.getImageArrayForm(), algoChosen);
+			
+			// Gaussian blur
+			if (actionChosen.contains(ACTION_CHOICES[0])) {
+				tempImage = GaussianBlur.getInstance().gaussianBlur(initImage.getImageArrayForm(), sigma);
+			}
+			// Edge detection
+			else if (actionChosen.contains(ACTION_CHOICES[1])) {		
+				int lowThreshold = 45;
+				int highThreshold = 90;
+				try {
+					lowThreshold = Integer.parseInt(cboxBitSelection1.getSelectedItem().toString());
+					highThreshold = Integer.parseInt(cboxBitSelection.getSelectedItem().toString());
+				} catch (NumberFormatException e) {
+					JOptionPane.showMessageDialog(this, "High/Low thresholds are not integers");
 				}
 				
-				if (convertedImage != null) {
-					if (!optionChosen.equalsIgnoreCase("Histogram Equalization") &&
-						jCheckHistogram.isSelected()) {
-						convertedImage = HistogramEqualization.getInstance().histEqual(evt, 
-							this, initImage.getCurrentBit(), convertedImage, MainWindow.HIST_CHOICES[0]);
-					}
-					setNewImage(convertedImage, MainWindow.NEW_IMAGE);
+				convertedImage = EdgeDetection.getInstance().edgeDetect(initImage.getImageArrayForm(), sigma,
+						lowThreshold, highThreshold);
+				int randomEdge[][] = EdgeDetection.getInstance().getRandomEdgeCells(convertedImage,100);
+			}
+			// Adaptive Canny Blurring
+            else if (actionChosen.contains(ACTION_CHOICES[2])) {
+				int JNCD = 0;
+				double K = 0;
+				try {
+					K = Double.valueOf(textFieldWidth.getText());
+					JNCD = Integer.valueOf(textFieldHeight.getText());
+				} catch (NumberFormatException e) {
+					JOptionPane.showMessageDialog(this, "JNCD is not an integer");
 				}
+				tempImage = AdaptiveCanny.getInstance().adaptiveBlurring(initImage.getImageArrayForm(),
+						JNCD, K);
+			}
+			// Adaptive Canny
+			else if (actionChosen.contains(ACTION_CHOICES[3])) {
+				int JNCD = 0;
+				double K = 0;
+				try {
+					K = Double.valueOf(textFieldWidth.getText());
+					JNCD = Integer.valueOf(textFieldHeight.getText());
+				} catch (NumberFormatException e) {
+					JOptionPane.showMessageDialog(this, "JNCD is not an integer");
+				}
+				convertedImage = AdaptiveCanny.getInstance().getAdaptiveFilter(initImage.getImageArrayForm(),
+						JNCD, K);
+			}
+			
+			if (tempImage != null) {
+				convertedImage = MainWindow.scaledRgbInt(tempImage);
+			}
+			
+			if (convertedImage != null) {
+				if (jCheckHistogram.isSelected()) {
+					convertedImage = HistogramEqualization.getInstance().histEqual(evt, 
+						this, initImage.getCurrentBit(), convertedImage, MainWindow.HIST_CHOICES[0]);
+				}
+				setNewImage(convertedImage, MainWindow.NEW_IMAGE);
 			}
 		}
 	}//GEN-LAST:event_btnExecuteActionPerformed
@@ -380,107 +392,48 @@ public class MainWindow extends javax.swing.JFrame {
 	
 	private void cboxActionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cboxActionActionPerformed
 		String action = cboxAction.getSelectedItem().toString();
-		cboxAlgo.setEnabled(action.equalsIgnoreCase("Zoom Out") ||
-			action.equalsIgnoreCase("Histogram Equalization") ||
-			action.equalsIgnoreCase("Spatial Filtering Restoration") ||
-			action.equalsIgnoreCase("Spatial Filtering Smoothing") || 
-            action.equalsIgnoreCase("Image Compression"));
-		cboxBitSelection.setEnabled(action.equalsIgnoreCase("Bit Change") ||
-			action.equalsIgnoreCase("Bit Plane Removal"));
-		cboxBitSelection1.setEnabled(action.equalsIgnoreCase("Bit Plane Removal"));
-		textFieldWidth.setEditable(action.equalsIgnoreCase("Zoom Out") ||
-			action.equalsIgnoreCase("Zoom In") || 
-			action.equalsIgnoreCase("Spatial Filtering Restoration") ||
-			action.equalsIgnoreCase("Spatial Filtering Smoothing"));
-		textFieldHeight.setEditable(action.equalsIgnoreCase("Zoom Out") ||
-			action.equalsIgnoreCase("Zoom In"));
-		jCheckHistogram.setEnabled(!action.equalsIgnoreCase("Histogram Equalization"));
-		
-		// Reset current bit
-		if (!action.equalsIgnoreCase("Bit Change")) {
-			currentConvBit = -1;
-		}
-		
-		// Reset histogram equalization check
-		if (action.equalsIgnoreCase("Histogram Equalization")) {
-			jCheckHistogram.setSelected(false);
-		}
-					
 		setAlgorithms(action);
 		setTextFields(action);
-		setBits(action);
+		setThresholds(action);
 	}//GEN-LAST:event_cboxActionActionPerformed
 
-    
 	private void setAlgorithms(String action) {
-		if (action.equalsIgnoreCase("Zoom Out")) {
-			DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>(ZOOMOUT_CHOICES);
-			cboxAlgo.setModel(model);
-		}
-		else if (action.equalsIgnoreCase("Histogram Equalization")) {
-			DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>(MainWindow.HIST_CHOICES);
-			cboxAlgo.setModel(model);
-		}
-		else if (action.equalsIgnoreCase("Spatial Filtering Smoothing")) {
-			DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>(MainWindow.SMOOTHING_CHOICES);
-			cboxAlgo.setModel(model);
-		}
-		else if (action.equalsIgnoreCase("Spatial Filtering Restoration")) {
-			DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>(MainWindow.RESTORATION_CHOICES);
-			cboxAlgo.setModel(model);
-		}
-        else if (action.equalsIgnoreCase("Image Compression")) {
-            DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>(MainWindow.ENCODING_CHOICES);
-            cboxAlgo.setModel(model);
-        }
+		//TODO : DELETE?
 	}
-    
 	
-	private void setTextFields(String action) {
-		if (action.contains("Zoom")) {
-			lblText1.setText("Width");
-			lblText2.setText("Height");
-			if (initImage.getBufferedImage() != null) {
-				int tempWidth = initImage.getWidth() >> 1;
-				int tempHeight = initImage.getHeight() >> 1;
-				textFieldWidth.setText(String.valueOf(tempWidth));
-				textFieldHeight.setText(String.valueOf(tempHeight));
-			}
-			else {
-				textFieldWidth.setText("32");
-				textFieldHeight.setText("32");
-			}
-		}
-		else if (action.contains("Spatial")) {
-			lblText1.setText("Mask Size");
+	private void setTextFields(String action) {		
+		lblText1.setText("Sigma");
+		textFieldWidth.setText("1");
+		
+		if (action.toUpperCase().contains("ADAPTIVE CANNY")) {
+			lblText1.setText("K Constant");
+			lblText2.setText("JNCD");
+			textFieldHeight.setText("20");
+			textFieldHeight.setEditable(true);
+			textFieldWidth.setText("1.2");
+		} else {
 			lblText2.setText("");
-			textFieldWidth.setText("3");
-			textFieldHeight.setText("3");
+			textFieldHeight.setText(textFieldWidth.getText());
+			textFieldHeight.setEditable(false);
 		}
 	}
 	
-	private void setBits(String action) {
-		if (action.equalsIgnoreCase("Bit Change")) {
-			jLabelBits1.setText("Bits");
-			jLabelBits2.setText("");
-			Integer numberOfBits[] = new Integer[MAX_BIT];
-			for (int i = 0; i < MAX_BIT; i++) {
+	private void setThresholds(String action) {
+		if (action.toUpperCase().contains("CANNY EDGE")) {
+			cboxBitSelection.setEnabled(true);
+			cboxBitSelection1.setEnabled(true);
+			Integer numberOfBits[] = new Integer[MAX_GRAYSCALE_VALUE];
+			for (int i = 0; i < MAX_GRAYSCALE_VALUE; i++) {
 				numberOfBits[i] = i + 1;
 			}
 			DefaultComboBoxModel<Integer> model = new DefaultComboBoxModel<>(numberOfBits);
 			cboxBitSelection.setModel(model);
 			cboxBitSelection1.setModel(model);
-		}
-		else if (action.equalsIgnoreCase("Bit Plane Removal")) {
-			jLabelBits1.setText("Bit Plane Remove Start");
-			jLabelBits2.setText("Bit Plane Remove End");
-			Integer numberOfBits[] = new Integer[MAX_BIT];
-			for (int i = 0; i < MAX_BIT; i++) {
-				numberOfBits[i] = i;
-			}
-			DefaultComboBoxModel<Integer> model = new DefaultComboBoxModel<>(numberOfBits);
-			cboxBitSelection.setModel(model);
-			cboxBitSelection1.setModel(model);
+			cboxBitSelection.getModel().setSelectedItem("45"); // default low bit = 45
+			cboxBitSelection1.getModel().setSelectedItem("90"); // default high bit = 90
+		} else {
+			cboxBitSelection.setEnabled(false);
+			cboxBitSelection1.setEnabled(false);
 		}
 	}
 	
@@ -496,7 +449,7 @@ public class MainWindow extends javax.swing.JFrame {
 				BufferedImage img = ImageIO.read(jFileChooser1.getSelectedFile());
 				
 				initPictureWidth = img.getWidth();
-				initPictureHeight = img.getHeight();
+				initPictureHeight = img.getHeight();				
 								
 				initImage.setInitBufferedImage(img);
 				initImage.setCurrentBit(MAX_BIT);
@@ -532,47 +485,23 @@ public class MainWindow extends javax.swing.JFrame {
     private void cboxAlgoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cboxAlgoActionPerformed
         String actionChosen = cboxAction.getSelectedItem().toString();
 		String algoChosen = cboxAlgo.getSelectedItem().toString();
-		if (actionChosen.equalsIgnoreCase("Spatial Filtering Smoothing")) {
-			boolean highBoostChosen;
-			if (highBoostChosen = algoChosen.contains("High-boost")) {
-				textFieldHeight.setEditable(highBoostChosen);
-				lblText2.setText("A (constant)");
-				textFieldHeight.setText("0");
-			}
-			else {
-				textFieldHeight.setEditable(highBoostChosen);
-				lblText2.setText("");
-				textFieldHeight.setText(textFieldWidth.getText());
-			}
-		}
-		else if (actionChosen.equalsIgnoreCase("Spatial Filtering Restoration")) {
-			if (algoChosen.contains("Contraharmonic")) {
-				textFieldHeight.setEditable(true);
-				lblText2.setText("Q Order Filter");
-				textFieldHeight.setText("0");
-			}
-			else if (algoChosen.contains("Alpha-trimmed")) {
-				textFieldHeight.setEditable(true);
-				lblText2.setText("D (pixels)");
-				textFieldHeight.setText("0");
-			}
-			else {
-				textFieldHeight.setEditable(false);
-				lblText2.setText("");
-				textFieldHeight.setText(textFieldWidth.getText());
-			}
-		}
     }//GEN-LAST:event_cboxAlgoActionPerformed
 
     private void cboxBitSelectionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cboxBitSelectionActionPerformed
         int chosen = Integer.parseInt(cboxBitSelection.getSelectedItem().toString());
-		Integer bitSelection[] = new Integer[MAX_BIT - chosen];
+		int prevValue = Integer.parseInt(cboxBitSelection1.getSelectedItem().toString());
+		
+		Integer bitSelection[] = new Integer[MAX_GRAYSCALE_VALUE - chosen];
 		int index = 0;
-		for (int i = 0; i < MAX_BIT; i++) {
+		for (int i = 0; i < MAX_GRAYSCALE_VALUE; i++) {
 			if (i >= chosen) bitSelection[index++] = i;
 		}
 		DefaultComboBoxModel<Integer> model = new DefaultComboBoxModel<>(bitSelection);
 		cboxBitSelection1.setModel(model);
+		
+		if (prevValue >= chosen) {
+			cboxBitSelection1.getModel().setSelectedItem(prevValue);
+		}
     }//GEN-LAST:event_cboxBitSelectionActionPerformed
 
 	
@@ -612,6 +541,10 @@ public class MainWindow extends javax.swing.JFrame {
 		return (int) Math.floor(input + 0.5);
 	}
 	
+	public static final int evenRound(Double input) {
+		return (int) Math.floor(input + 0.49);
+	}
+	
 	private void setNewImage(int newImageValues[][], int imageToSet) {
 		if (newImageValues.length > 0) {
 			int newWidth = newImageValues.length;
@@ -626,6 +559,42 @@ public class MainWindow extends javax.swing.JFrame {
 					Color gColor = new Color(gr, gr, gr);
 					newBImg.setRGB(i, j, gColor.getRGB());
 				}
+			}
+
+			if (imageToSet == MainWindow.NEW_IMAGE) {
+				labelNewImage.setSize(d);
+				labelNewImage.setIcon(new ImageIcon(newBImg));
+			}
+			else if (imageToSet == MainWindow.INIT_IMAGE) {
+				labelInitImage.setSize(d);
+				labelInitImage.setIcon(new ImageIcon(newBImg));
+			}
+		}
+	}
+	
+	private void setNewImage(int newImageValues[][], int imageToSet, int keys[][]) {
+		if (newImageValues.length > 0) {
+			int newWidth = newImageValues.length;
+			int newHeight = newImageValues[0].length;
+			Dimension d = new Dimension(newWidth, newHeight);
+			BufferedImage newBImg = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_RGB);
+
+			for (int i = 0; i < newWidth; i++) {
+				for (int j = 0; j < newHeight; j++) {
+					int gr = newImageValues[i][j];
+
+					Color gColor = new Color(gr, gr, gr);
+					newBImg.setRGB(i, j, gColor.getRGB());
+				}
+			}
+			
+			System.out.println("Coloring edges...");
+			System.out.println(keys.length);
+			for (int coords[] : keys) {
+				int i = coords[0];
+				int j = coords[1];
+				Color red = new Color(255,0,0);
+				newBImg.setRGB(i, j, red.getRGB());
 			}
 
 			if (imageToSet == MainWindow.NEW_IMAGE) {
@@ -663,6 +632,30 @@ public class MainWindow extends javax.swing.JFrame {
 		return paddedImage;
 	}
 	
+	// Pad the image with 0s
+	public static final double[][] paddedImage(final double inputArr[][], int maskSize) {
+		int oneDir = maskSize >> 1; // how far to go in one direction
+		int newWidth = inputArr.length + maskSize - 1;
+		int newHeight = inputArr[0].length + maskSize - 1;
+		double paddedImage[][] = new double[newWidth][newHeight];
+		
+		for (int i = 0; i < newWidth; i++) {
+			for (int j = 0; j < newHeight; j++) {
+				// Pad the top and bottom rows and left and right columns with 0s
+				if (i < oneDir || i >= (newWidth - oneDir) ||
+					j < oneDir || j >= (newHeight - oneDir)) {
+					paddedImage[i][j] = 0;
+				}
+				// Fill in the rest
+				else {
+					paddedImage[i][j] = inputArr[i-oneDir][j-oneDir];
+				}
+			}
+		}
+		
+		return paddedImage;
+	}
+	
 	public static void printImageArray(int imageArr[][]) {
 		for (int[] imageArr1 : imageArr) {
 			for (int col = 0; col < imageArr1.length; col++) {
@@ -670,6 +663,17 @@ public class MainWindow extends javax.swing.JFrame {
 			}
 			System.out.print("\n");
 		}
+		System.out.print("\n");
+	}
+	
+	public static void printImageArray(double imageArr[][]) {
+		for (double[] imageArr1 : imageArr) {
+			for (int col = 0; col < imageArr1.length; col++) {
+				System.out.print(String.format("%.4f ", imageArr1[col]));
+			}
+			System.out.print("\n");
+		}
+		System.out.print("\n");
 	}
 	
 	/**
@@ -684,6 +688,22 @@ public class MainWindow extends javax.swing.JFrame {
 			int centerI, int centerJ, int maskSize) {
 		int oneDir = maskSize >> 1;
 		int localArea[][] = new int[maskSize][maskSize];
+		
+		for (int i = 0; i < maskSize; i++) {
+			int initRowIndex = centerI + i;
+			for (int j = 0; j < maskSize; j++) {
+				int initColIndex = centerJ + j;
+				localArea[i][j] = paddedImage[initRowIndex][initColIndex];
+			}
+		}
+		
+		return localArea;
+	}
+	
+	public static final double[][] getLocalArea(double paddedImage[][],
+			int centerI, int centerJ, int maskSize) {
+		int oneDir = maskSize >> 1;
+		double localArea[][] = new double[maskSize][maskSize];
 		
 		for (int i = 0; i < maskSize; i++) {
 			int initRowIndex = centerI + i;
@@ -733,6 +753,207 @@ public class MainWindow extends javax.swing.JFrame {
 		
 		return localArea;
 	}
+	
+	/**
+	 * 
+	 * @param initImage
+	 * @param mask
+	 * @param convolve
+	 * @return 
+	 */
+	public static final double[][] convolveOrCorrelate(int initImage[][],
+			double mask[][], boolean convolve) {
+		// Flip mask if it is a convolution
+		if (convolve) {
+			mask = flipMask(mask);
+		}
+		int width = initImage.length;
+		int height = initImage[0].length;
+		int maskSize = mask.length;
+		double convertedImg[][] = new double[width][height];
+		int paddedImage[][] = MainWindow.paddedImage(initImage, maskSize);
+		double min = 262144;
+		double max = -(min);
+		
+		for (int i = 0; i < width; i++) {
+			for (int j = 0; j < height; j++) {
+				int localArea[][] = MainWindow.getLocalArea(paddedImage,
+						i, j, maskSize);
+				
+				double total_temp = 0.0;
+				for (int ii = 0; ii < maskSize; ii++) {
+					for (int jj = 0; jj < maskSize; jj++) {
+						double temp = localArea[ii][jj] * mask[ii][jj];
+						total_temp += temp;
+					}
+				}
+				if (total_temp > max) max = total_temp;
+				if (total_temp < min) min = total_temp;
+				convertedImg[i][j] = total_temp;
+			}
+		}
+		
+		return convertedImg;
+	}
+	
+	public static final double[][] convolveOrCorrelate(double initImage[][],
+			double mask[][], boolean convolve) {
+		// Flip mask if it is a convolution
+		if (convolve) {
+			mask = flipMask(mask);
+		}
+		int width = initImage.length;
+		int height = initImage[0].length;
+		int maskSize = mask.length;
+		double convertedImg[][] = new double[width][height];
+		double paddedImage[][] = MainWindow.paddedImage(initImage, maskSize);
+		double min = 262144;
+		double max = -(min);
+		
+		for (int i = 0; i < width; i++) {
+			for (int j = 0; j < height; j++) {
+				double localArea[][] = MainWindow.getLocalArea(paddedImage,
+						i, j, maskSize);
+				
+				double total_temp = 0.0;
+				for (int ii = 0; ii < maskSize; ii++) {
+					for (int jj = 0; jj < maskSize; jj++) {
+						double temp = localArea[ii][jj] * mask[ii][jj];
+						total_temp += temp;
+					}
+				}
+				if (total_temp > max) max = total_temp;
+				if (total_temp < min) min = total_temp;
+				convertedImg[i][j] = total_temp;
+			}
+		}
+		
+		return convertedImg;
+	}
+	
+	/**
+	 * 
+	 * @param localArea
+	 * @param mask
+	 * @param convolve True if convolution, false if correlation
+	 * @return 
+	 */
+	public static final double convolveOrCorrelateLocal(int localArea[][],
+			double mask[][], boolean convolve) {
+		if (localArea.length != mask.length) {
+			System.out.println("Local area and mask size are not the same!");
+			return -1;
+		}
+		
+		// Flip mask if it is a convolution
+		if (convolve) {
+			mask = flipMask(mask);
+		}
+		
+		int width = localArea.length;
+		int height = localArea[0].length;
+		int maskSize = mask.length;
+		double res = 0.0;
+		
+		for (int i = 0; i < width; i++) {
+			for (int j = 0; j < height; j++) {
+				double temp = localArea[i][j] * mask[i][j];
+				res += temp;
+			}
+		}
+		
+		return res;
+	}
+	
+	private static double[][] flipMask(double mask[][]) {
+		int maskSize = mask.length;
+		int radius = maskSize >> 1;
+				
+		// Flip in the x direction
+		for (int i = 0; i < maskSize; i++) {
+			for (int j = 1; j <= radius; j++) {
+				double temp = mask[i][radius-j];
+				mask[i][radius-j] = mask[i][radius+j];
+				mask[i][radius+j] = temp;
+			}
+		}
+		
+		// Flip in the y direction
+		for (int i = 0; i < maskSize; i++) {
+			for (int j = 1; j <= radius; j++) {
+				double temp = mask[radius-j][i];
+				mask[radius-j][i] = mask[radius+j][i];
+				mask[radius+j][i] = temp;
+			}
+		}
+		
+		return mask;
+	}
+	
+	public static final int[][] scaledRgbInt(double image[][]) {
+		double min = 262144;
+		double max = -(min);
+		int width = image.length;
+		int height = image[0].length;
+		int convertedImage[][] = new int[width][height];
+		
+		for (int i = 0; i < width; i++) {
+			for (int j = 0; j < height; j++) {
+				double result = image[i][j];
+				if (result > max) max = result;
+				if (result < min) min = result;
+			}
+		}
+		// Adjust the numbers
+		double adjustedMax = max - min;
+		for (int i = 0; i < width; i++) {
+			for (int j = 0; j < height; j++) {
+				double temp = image[i][j] - min;
+				temp = temp / adjustedMax;
+				int result = MainWindow.customRound(temp * MainWindow.MAX_GRAYSCALE_VALUE);
+				if (result > MainWindow.MAX_GRAYSCALE_VALUE)
+					result = MainWindow.MAX_GRAYSCALE_VALUE;
+				
+				convertedImage[i][j] = result;
+			}
+		}
+		
+		return convertedImage;
+	}
+	
+	public static final double[][] scaledRgbDouble(double image[][]) {
+		double min = 262144;
+		double max = -(min);
+		int width = image.length;
+		int height = image[0].length;
+		
+		for (int i = 0; i < width; i++) {
+			for (int j = 0; j < height; j++) {
+				double result = image[i][j];
+				if (result > max) max = result;
+				if (result < min) min = result;
+			}
+		}
+		// Adjust the numbers
+		double adjustedMax = max - min;
+		for (int i = 0; i < width; i++) {
+			for (int j = 0; j < height; j++) {
+				double temp = image[i][j] - min;
+				temp = temp / adjustedMax;
+				int result = MainWindow.customRound(temp * MainWindow.MAX_GRAYSCALE_VALUE);
+				if (result > MainWindow.MAX_GRAYSCALE_VALUE)
+					result = MainWindow.MAX_GRAYSCALE_VALUE;
+				
+				image[i][j] = result;
+			}
+		}
+		
+		return image;
+	}
+	
+	public static final void debugPrint(Object o) {
+		System.out.println("DEBUG: " + o);
+	}
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnConvertInit;
@@ -765,13 +986,6 @@ public class MainWindow extends javax.swing.JFrame {
 	public static final int MAX_GRAYSCALE_VALUE = 255;
 	public static final int MAX_BIT = 8;
 	public static final String[] HIST_CHOICES = {"Global", "Local 3x3", "Local 5x5", "Local 7x7", "Local 9x9"};
-	public static final String[] ZOOMOUT_CHOICES = {"Nearest Neighbor", "Linear (x)", "Linear (y)", "Bilinear"};
-	public static final String[] SMOOTHING_CHOICES = {"Smoothing Filter", "Median Filter", 
-		"Sharpening Laplacian Filter", "High-boost Filter"};
-	public static final String[] RESTORATION_CHOICES = {"Arithmetic mean filter", "Geometric mean filter",
-		"Harmonic mean filter", "Contraharmonic mean filter", 
-		"Max filter", "Min filter", "Midpoint filter",
-		"Alpha-trimmed mean filter"};
-    public static final String[] ENCODING_CHOICES = {"RLE on Grayscale", "RLE on Bit Planes",
-        "Huffman Coding", "LZW"};
+	public static final String[] ACTION_CHOICES = {"Gaussian Blur", "Canny Edge Detector", "Adaptive Canny Blurring",
+	"Adaptive Canny"};
 }
